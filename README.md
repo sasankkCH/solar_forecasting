@@ -1,7 +1,7 @@
-# Improved Solar Forecasting
+# Solar Power Forecasting
 
 ## Project Overview
-This project focuses on improving solar power forecasting using advanced machine learning models. It involves data preprocessing, model training, and evaluation to predict solar power generation more accurately.
+This project focuses on solar power forecasting using advanced machine learning models. It involves data preprocessing, model training, and evaluation to predict solar power generation more accurately.
 
 ## Directory Structure
 - **data/**: Contains the dataset used for training and evaluation
@@ -20,7 +20,7 @@ This project focuses on improving solar power forecasting using advanced machine
   - Fold-wise Predictions: Individual prediction results for each cross-validation fold
 
 ## Key Scripts
-- **improved_solar_forecasting.py**: 
+- **solar_forecasting.py**: 
   - Preprocesses the data with feature engineering and outlier removal.
   - Trains a neural network model with improved architecture and regularization.
   - Evaluates model performance using metrics like RMSE and R².
@@ -62,7 +62,7 @@ The model's performance is evaluated using:
 ## Usage
 To run the scripts, ensure that all dependencies are installed and execute the Python files in the command line:
 ```bash
-python improved_solar_forecasting.py
+python solar_forecasting.py
 python load_best_model.py
 ```
 
@@ -91,9 +91,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Citation
 If you use this project in your research or work, please cite it as:
 ```
-@software{improved_solar_forecasting,
+@software{solar_forecasting,
   author = {CH Sasank},
-  title = {Improved Solar Power Forecasting},
+  title = {Solar Power Forecasting},
   year = {2024},
-  url = {https://github.com/sasankkCH/improved_solar_forecasting}
+  url = {https://github.com/sasankkCH/solar_forecasting}
 }
