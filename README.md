@@ -13,70 +13,75 @@ This project focuses on solar power forecasting using advanced machine learning 
   - Each fold's best model is preserved for ensemble predictions
 
 - **results/**: Holds results from model evaluations, including:
-  - Model Architecture: `enhanced_model_architecture.png`
+  - Model Architecture: Saved model architecture files (*.h5)
   - Training History: Training progress plots for each fold
   - Prediction Visualizations: Scatter plots comparing actual vs predicted values
   - Metrics: CSV and TXT files containing detailed performance metrics
   - Fold-wise Predictions: Individual prediction results for each cross-validation fold
 
-## Key Scripts
-- **solar_forecasting.py**: 
-  - Preprocesses the data with feature engineering and outlier removal.
-  - Trains a neural network model with improved architecture and regularization.
-  - Evaluates model performance using metrics like RMSE and R².
-  - Includes functions for plotting training history and predictions.
-
-- **load_best_model.py**: 
-  - Loads a pre-trained model and preprocesses new data.
-  - Makes predictions and visualizes results with scatter plots.
-
-## Model Features
-- **Data Preprocessing**:
+## Key Features
+- **Advanced Data Preprocessing**:
   - Feature engineering including radiation-temperature interactions
   - Cloud cover impact calculations
   - Wind power computations
   - Humidity-temperature relationships
   - Robust outlier detection and removal using IQR method
 
-- **Model Architecture**:
-  - Deep neural network with optimized layers
+- **Optimized Model Architecture**:
+  - Deep neural network with three dense layers (64-128-64 neurons)
   - Batch normalization for training stability
-  - Dropout layers for preventing overfitting
+  - Dropout layers (0.3, 0.3, 0.2) for preventing overfitting
   - LeakyReLU activation functions
   - L1-L2 regularization for better generalization
 
-- **Training Process**:
-  - K-fold cross-validation for robust evaluation
-  - Early stopping to prevent overfitting
+- **Robust Training Process**:
+  - 5-fold cross-validation for reliable evaluation
+  - Early stopping with patience of 20 epochs
   - Learning rate reduction on plateau
-  - Automatic model checkpointing
+  - Model checkpointing for best weights
   - Comprehensive metrics tracking
 
 ## Performance Metrics
-The model's performance is evaluated using:
-- Root Mean Square Error (RMSE)
-- Mean Absolute Error (MAE)
-- R-squared (R²) Score
-- Detailed validation metrics for each fold
+Latest model performance (averaged across 5 folds):
+- Training RMSE: 42.16 ± 3.61
+- Test RMSE: 45.75 ± 3.05
+- Training MAE: 30.44 ± 2.96
+- Test MAE: 32.94 ± 2.70
+- Training R²: 0.9725 ± 0.0047
+- Test R²: 0.9677 ± 0.0033
+
+These metrics demonstrate:
+- Excellent predictive accuracy (R² > 0.96)
+- Strong generalization (small gap between training and test metrics)
+- Consistent performance (low standard deviations)
 
 ## Usage
-To run the scripts, ensure that all dependencies are installed and execute the Python files in the command line:
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Run the training script:
 ```bash
 python solar_forecasting.py
-python load_best_model.py
+```
+
+3. Load and use a trained model:
+```python
+import tensorflow as tf
+model = tf.keras.models.load_model('path_to_model.h5')
 ```
 
 ## Dependencies
-The project requires the following Python packages:
-- TensorFlow
+- TensorFlow >= 2.0
 - Pandas
 - NumPy
 - Scikit-learn
 - Matplotlib
 - Seaborn
 
-## Authors and Acknowledgments
-This project was developed by CH Sasank. Special thanks to contributors and any external resources or datasets used.
+## Author
+CH Sasank
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
