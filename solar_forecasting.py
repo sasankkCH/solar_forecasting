@@ -11,16 +11,29 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datetime import datetime
 import os
+import sys
 
-# Define directory paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Check if running in Jupyter notebook
+def is_jupyter():
+    try:
+        shell = get_ipython().__class__.__name__
+        if shell == 'ZMQInteractiveShell':  # Jupyter notebook or qtconsole
+            return True
+        elif shell == 'TerminalInteractiveShell':  # IPython terminal
+            return False
+    except NameError:
+        return False
+    return False
+
+# Set up paths based on environment
+if is_jupyter():
+    BASE_DIR = os.getcwd()
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 DATA_DIR = os.path.join(BASE_DIR, 'data')
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 RESULTS_DIR = os.path.join(BASE_DIR, 'results')
-
-# Create directories if they don't exist
-for directory in [DATA_DIR, MODELS_DIR, RESULTS_DIR]:
-    os.makedirs(directory, exist_ok=True)
 
 def preprocess_data(data):
     """Enhanced data preprocessing with feature engineering and outlier handling"""
@@ -88,7 +101,7 @@ def plot_training_history(history, fold, save_path):
     plt.subplot(1, 3, 1)
     plt.plot(history.history['loss'], label='Training Loss')
     plt.plot(history.history['val_loss'], label='Validation Loss')
-    plt.title(f'Model Loss (Fold {fold + 1})')
+    plt.title(f'Model Loss (Fold {fold})')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
@@ -97,7 +110,7 @@ def plot_training_history(history, fold, save_path):
     plt.subplot(1, 3, 2)
     plt.plot(history.history['mae'], label='Training MAE')
     plt.plot(history.history['val_mae'], label='Validation MAE')
-    plt.title(f'Model MAE (Fold {fold + 1})')
+    plt.title(f'Model MAE (Fold {fold})')
     plt.xlabel('Epoch')
     plt.ylabel('MAE')
     plt.legend()
@@ -106,13 +119,13 @@ def plot_training_history(history, fold, save_path):
     plt.subplot(1, 3, 3)
     plt.plot(history.history['mse'], label='Training MSE')
     plt.plot(history.history['val_mse'], label='Validation MSE')
-    plt.title(f'Model MSE (Fold {fold + 1})')
+    plt.title(f'Model MSE (Fold {fold})')
     plt.xlabel('Epoch')
     plt.ylabel('MSE')
     plt.legend()
     
     plt.tight_layout()
-    plt.savefig(os.path.join(save_path, f'training_history_fold_{fold+1}.png'))
+    plt.savefig(os.path.join(save_path, f'training_history_fold_{fold}.png'))
     plt.close()
 
 def plot_predictions(y_true, y_pred, fold, set_name='Validation', save_path=RESULTS_DIR):
@@ -122,7 +135,7 @@ def plot_predictions(y_true, y_pred, fold, set_name='Validation', save_path=RESU
     plt.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], 'r--', lw=2)
     plt.xlabel('Actual Power Generation (kW)')
     plt.ylabel('Predicted Power Generation (kW)')
-    plt.title(f'{set_name} Predictions vs Actual Values (Fold {fold + 1})')
+    plt.title(f'{set_name} Predictions vs Actual Values (Fold {fold})')
     
     # Add R² score to plot
     r2 = r2_score(y_true, y_pred)
@@ -131,7 +144,7 @@ def plot_predictions(y_true, y_pred, fold, set_name='Validation', save_path=RESU
              bbox=dict(facecolor='white', alpha=0.8))
     
     plt.tight_layout()
-    plt.savefig(os.path.join(save_path, f'{set_name.lower()}_predictions_fold_{fold+1}.png'))
+    plt.savefig(os.path.join(save_path, f'{set_name.lower()}_predictions_fold_{fold}.png'))
     plt.close()
 
 def save_metrics(metrics_dict, save_path=RESULTS_DIR):
@@ -148,11 +161,24 @@ def save_metrics(metrics_dict, save_path=RESULTS_DIR):
             f.write(f'{key}: {value}\n')
 
 def main():
+    # Create timestamped run directory
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    run_dir = os.path.join(RESULTS_DIR, f'run_{timestamp}')
+    
+    # Create subdirectories for this run
+    subdirs = ['metrics', 'predictions', 'training_history', 'model_architecture', 'validation_plots']
+    for subdir in [MODELS_DIR, DATA_DIR, RESULTS_DIR]:
+        os.makedirs(subdir, exist_ok=True)
+    for subdir in subdirs:
+        os.makedirs(os.path.join(run_dir, subdir), exist_ok=True)
+    
+    print(f"Results will be saved in: {run_dir}")
+    
     # Load and preprocess data
     print("Loading and preprocessing data...")
     data_path = os.path.join(DATA_DIR, 'solarpowergeneration.csv')
     if not os.path.exists(data_path):
-        raise FileNotFoundError(f"Data file not found at: {data_path}")
+        raise FileNotFoundError(f"Data file not found at: {data_path}\nPlease place your data file in: {DATA_DIR}")
     
     data = pd.read_csv(data_path)
     data = preprocess_data(data)
@@ -207,7 +233,7 @@ def main():
                 min_lr=1e-6
             ),
             ModelCheckpoint(
-                os.path.join(MODELS_DIR, f'best_model_fold_{fold}.h5'),
+                os.path.join(run_dir, 'model_architecture', f'best_model_fold_{fold}.h5'),
                 monitor='val_loss',
                 save_best_only=True
             )
@@ -226,7 +252,7 @@ def main():
         training_time = (datetime.now() - start_time).total_seconds()
         
         # Save training history plot
-        plot_training_history(history, fold, RESULTS_DIR)
+        plot_training_history(history, fold, os.path.join(run_dir, 'training_history'))
         
         # Make predictions
         y_train_pred_scaled = model.predict(X_train_scaled)
@@ -256,8 +282,8 @@ def main():
         all_metrics['training_time'].append(training_time)
         
         # Plot predictions
-        plot_predictions(y_train, y_train_pred, fold, 'Training')
-        plot_predictions(y_val, y_val_pred, fold, 'Validation')
+        plot_predictions(y_train, y_train_pred, fold, 'Training', os.path.join(run_dir, 'validation_plots'))
+        plot_predictions(y_val, y_val_pred, fold, 'Validation', os.path.join(run_dir, 'validation_plots'))
         
         # Save fold predictions
         fold_df = pd.DataFrame({
@@ -265,7 +291,7 @@ def main():
             'Predicted_Power': y_val_pred.flatten(),
             'Absolute_Error': np.abs(y_val.flatten() - y_val_pred.flatten())
         })
-        fold_df.to_csv(os.path.join(RESULTS_DIR, f'predictions_fold_{fold}.csv'), index=False)
+        fold_df.to_csv(os.path.join(run_dir, 'predictions', f'predictions_fold_{fold}.csv'), index=False)
         
         # Print fold metrics
         print(f"\nFold {fold} Results:")
@@ -285,7 +311,24 @@ def main():
         metrics[f'std_{metric}'] = np.std(values)
     
     # Save final metrics
-    save_metrics(metrics)
+    metrics_file = os.path.join(run_dir, 'metrics', 'model_metrics.csv')
+    pd.DataFrame([metrics]).to_csv(metrics_file, index=False)
+    
+    # Also save as readable text file
+    with open(os.path.join(run_dir, 'metrics', 'model_metrics.txt'), 'w') as f:
+        for key, value in metrics.items():
+            f.write(f'{key}: {value}\n')
+    
+    print(f"\nResults saved in: {run_dir}")
+    
+    # Display directory structure if in Jupyter
+    if is_jupyter():
+        print("\nDirectory structure:")
+        for subdir in subdirs:
+            files = os.listdir(os.path.join(run_dir, subdir))
+            print(f"\n{subdir}/")
+            for file in files:
+                print(f"  └─ {file}")
     
     return metrics
 
